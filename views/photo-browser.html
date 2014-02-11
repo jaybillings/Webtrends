@@ -1,7 +1,11 @@
 <div class="image-browser">
     <div class="image-browser-ribbon">
-        <div class="image-browser-pic" ng-repeat="i in images | orderBy:orderProp">
-            <!--img ng-src="http://www.flickr.com/photos/{{user.id}}/{{i._id}}/"/-->
-        </div>
+        <button id="prev" type="button" ng-click="fetchPics(true)"></button>
+        <button id="next" type="button" ng-click="fetchPics(false)"></button>
+        <ol>
+            <li class="image-browser-pic" ng-repeat="p in photos | orderBy:orderProp">
+                <img ng-src="{{p.thumbnail}}" title={{p.id}} />
+            </li>
+        </ol>
     </div>
 </div>

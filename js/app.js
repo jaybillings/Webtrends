@@ -24,12 +24,19 @@ gallery.controller('galleryCtrl', ['$scope', '$routeParams', '$http', '$timeout'
         $scope.imageList = [];
         $scope.photos = [];
         $scope.curPage = 1;
+        $scope.currentPhoto = {};
+
+        /* Helper functions */
+        var parseXML = function (data) {
+            return x2js.xml_str2json(data.toString());
+        };
 
         var getPhotos = function (page, count) {
             // Get photo IDs
             var page = page || 1;
             var count = count || 10;
             $http.get('http://api.flickr.com/services/rest/', {
+                cache: true,
                 params: {
                     method: 'flickr.people.getPublicPhotos',
                     api_key: api_key,
@@ -38,64 +45,37 @@ gallery.controller('galleryCtrl', ['$scope', '$routeParams', '$http', '$timeout'
                     page: page
                 }
             }).success(function (data) {
-                var images = x2js.xml_str2json(data.toString()).rsp.photos.photo;
+                var images = parseXML(data).rsp.photos.photo;
                 $scope.imageList = [];
                 for (var i = 0; i < images.length; i++) {
                     $scope.imageList.push(images[i]._id);
                 }
             })
             .then(function (result) {
-                var photoCache = $cacheFactory.get($scope.imageList.join(''));
-                console.log(photoCache);
-                if (photoCache) {
-                    // Check the cache
-                    console.log('in cache');
-                    var photoData = angular.fromJson(photoCache.photos);
-                    console.log(photoData);
-                    $scope.photos = photoData;
-                } else {
-                    // Make request
-                    console.log('making request');
-                    var cache = $cacheFactory($scope.imageList.join(''));
-                    $scope.photos = [];
-                    for (var i = 0; i < $scope.imageList.length; i++) {
-                        $http.get('http://api.flickr.com/services/rest/', {
-                            params: {
-                                method: 'flickr.photos.getSizes',
-                                api_key: api_key,
-                                photo_id: $scope.imageList[i]
-                            }
-                        }).success(function (data) {
-                            var sizes = x2js.xml_str2json(data.toString()).rsp.sizes.size;
-                            $scope.photos.push({
-                                'id': $scope.imageList[i],
-                                'thumbnail': sizes[2]._source,
-                                'display': sizes[5]._source
-                            });
+                var id;
+                $scope.photos = [];
+                for (var i = 0; i < $scope.imageList.length; i++) {
+                    id = $scope.imageList[i];
+                    $http.get('http://api.flickr.com/services/rest/', {
+                        cache: true,
+                        params: {
+                            method: 'flickr.photos.getSizes',
+                            api_key: api_key,
+                            photo_id: $scope.imageList[i]
+                        }
+                    }).success(function (data, status, headers, config) {
+                        var sizes = parseXML(data).rsp.sizes.size;
+                        $scope.photos.push({    
+                            'thumbnail': sizes[2]._source,
+                            'display': sizes[5]._source,
+                            'id': config.params.photo_id
                         });
-                    }
-                    cache.put('photos', angular.toJson($scope.photos))
+                    });
                 }
-            });
+            })
         };
         
-        // Initial fetch
-        $http.get('http://api.flickr.com/services/rest/', { 
-            params: {
-                method: 'flickr.people.findByUsername',
-                api_key: api_key,
-                username: $scope.user.name
-            }
-        })
-        .success(function (data) {
-            $scope.user.id = x2js.xml_str2json(data.toString()).rsp.user._nsid;
-        })
-        .then(function (result) {
-            getPhotos();
-        });
-        
         $scope.fetchPics = function (reverse) {
-            console.log('reverse', reverse);
             if (reverse) {
                 $scope.curPage--;
             } else {
@@ -103,6 +83,64 @@ gallery.controller('galleryCtrl', ['$scope', '$routeParams', '$http', '$timeout'
             }
             getPhotos($scope.curPage);
         };
+        
+        $scope.setCurrentPic = function (id, url) {
+            $http.get('http://api.flickr.com/services/rest/', {
+                cache: true,
+                params: {
+                    method: 'flickr.photos.getInfo',
+                    api_key: api_key,
+                    photo_id: id
+                }
+            })
+            .success(function (data) {
+                var picInfo = parseXML(data).rsp.photo;
+                var tags = [];
+                if (picInfo && picInfo.tags) {
+                    for (var i = 0; i < picInfo.tags.tag.length; i++) {
+                        tags.push(picInfo.tags.tag[i]._raw);
+                    }
+                } else {
+                    tags = ['NONE'];
+                }
+                $scope.currentPic = {
+                    title: picInfo.title,
+                    tags: tags.join(', '),
+                    url: url
+                };
+            })
+        }
+
+        /* Engine code */
+
+        $http.get('http://api.flickr.com/services/rest/', { 
+            cache: true,
+            params: {
+                method: 'flickr.people.findByUsername',
+                api_key: api_key,
+                username: $scope.user.name
+            }
+        })
+        .success(function (data) {
+            $scope.user.id = parseXML(data).rsp.user._nsid;
+        })
+        .then(function (result) {
+            var getInfo = function () {
+                if (!$scope.photos[0]) {
+                    $timeout(function () {
+                        getInfo();
+                    }, 1000);
+                } else {
+                    // Put the ids in
+                    /*for (i = 0; i < $scope.imageList.length; i++) {
+                        angular.extend($scope.photos[i], {id: $scope.imageList[i]});
+                    }*/
+                    $scope.setCurrentPic($scope.photos[0].id, $scope.photos[0].display);
+                }
+            };
+            getPhotos();
+            getInfo();
+        });
     }
 ]);
 

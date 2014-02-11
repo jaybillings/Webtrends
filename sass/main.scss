@@ -8,19 +8,47 @@ body {
 	background: $darkGray;
 }
 
-h1 {
-    color: $red;
+header {
+    color: $cream;
     font-size: 2.5em;
     padding: 10px 20px;
+    border-bottom: 2px solid $red;
+}
+
+main {
+    overflow: hidden;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.image-browser-display {
+    text-align: center;
+    img {
+        margin: 2% 30%;
+        display: block;
+        overflow: hidden;
+        box-shadow: black 7px 7px 10px;
+        width: 40%;
+    }
+    .info {
+        padding: 15px 0 50px;
+        font-size: 20px;
+        span { 
+            padding: 0 5px;
+        }
+    }
 }
 
 .image-browser-ribbon {
     overflow: hidden;
     width: 100%;
     height: 150px;
-    border: 1px solid red;
+    border-top: 2px solid $red;
+    border-bottom: 2px solid $red;
     ol {
-        margin: 1.5% 10.5%;
+        margin: 1.5% 8%;
     }
     button {
         width: 50px;
@@ -45,5 +73,16 @@ h1 {
     img {
         width: 75px;
         height: 100px;
+        cursor: pointer;
+        border: 2px solid $darkGray;
+        &:hover {
+            border: 2px solid $cream;
+        }
     }
+}
+
+footer {
+    height: 100px;
+    margin: 20px 10px;
+    color: $cream;
 }

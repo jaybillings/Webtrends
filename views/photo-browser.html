@@ -1,10 +1,17 @@
 <div class="image-browser">
+    <div class="image-browser-display">
+        <img ng-src="{{currentPic.url}}" />
+        <div class="info">
+            <span><span class="bold">Title:</span> {{currentPic.title}}</span>
+            <span><span class="bold">Tags:</span> {{currentPic.tags}}</span>
+        </div>
+    </div>
     <div class="image-browser-ribbon">
         <button id="prev" type="button" ng-click="fetchPics(true)"></button>
         <button id="next" type="button" ng-click="fetchPics(false)"></button>
         <ol>
-            <li class="image-browser-pic" ng-repeat="p in photos | orderBy:orderProp">
-                <img ng-src="{{p.thumbnail}}" title={{p.id}} />
+            <li class="image-browser-pic" ng-repeat="p in photos">
+                <img ng-src="{{p.thumbnail}}" title={{p.id}} ng-click="setCurrentPic(p.id,p.display)"/>
             </li>
         </ol>
     </div>

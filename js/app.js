@@ -79,9 +79,11 @@ gallery.controller('galleryCtrl', ['$scope', '$routeParams', '$http', '$timeout'
             if (reverse) {
                 $scope.curPage--;
             } else {
-                $scope.curPag++;
+                $scope.curPage++;
             }
-            getPhotos($scope.curPage);
+            if ($scope.curPage > 0) {
+                getPhotos($scope.curPage);
+            }
         };
         
         $scope.setCurrentPic = function (id, url) {
